@@ -1,0 +1,15 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "AuroraDTL fixture",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/out/auroradtl.exe",
+      "args": ["run", "tests/fixtures/balanced_quote.json", "--json", "--events"],
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "build",
+      "console": "integratedTerminal"
+    }
+  ]
+}

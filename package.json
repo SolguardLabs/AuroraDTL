@@ -1,0 +1,19 @@
+{
+  "name": "auroradtl",
+  "version": "0.1.0",
+  "private": true,
+  "description": "C++ DTL pricing and settlement simulator for multi-asset internal markets.",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node scripts/build.mjs && node --test --experimental-strip-types \"tests/node/*.test.ts\"",
+    "ci": "node scripts/build.mjs --warnings && node --test --experimental-strip-types \"tests/node/*.test.ts\"",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "scenario": "fee_matrix",
+  "clock": {
+    "timestamp": 1800000240,
+    "window": 30000004
+  },
+  "assets": [
+    {
+      "symbol": "USD18",
+      "decimals": 18,
+      "maxDeviationBps": 100,
+      "toleranceBps": 80,
+      "minTrade": "1000000000000"
+    },
+    {
+      "symbol": "EUR18",
+      "decimals": 18,
+      "maxDeviationBps": 100,
+      "toleranceBps": 80,
+      "minTrade": "1000000000000"
+    }
+  ],
+  "prices": [
+    {
+      "asset": "USD18",
+      "price": "1",
+      "confidenceBps": 6,
+      "updatedAt": 1800000000,
+      "sequence": 1
+    },
+    {
+      "asset": "EUR18",
+      "price": "1",
+      "confidenceBps": 6,
+      "updatedAt": 1800000000,
+      "sequence": 1
+    }
+  ],
+  "fees": {
+    "defaultBps": 12,
+    "routeBps": 3,
+    "feeAccount": "treasury",
+    "assetOverrides": [
+      {
+        "asset": "EUR18",
+        "bps": 10
+      }
+    ]
+  },
+  "accounts": [
+    {
+      "id": "alice",
+      "balances": [
+        {
+          "asset": "USD18",
+          "amount": "2000000000000000"
+        }
+      ]
+    },
+    {
+      "id": "treasury",
+      "balances": []
+    }
+  ],
+  "routes": [
+    {
+      "id": "usd-eur",
+      "hops": ["USD18", "EUR18"],
+      "toleranceBps": 80,
+      "feeBps": 5,
+      "settlementWindow": 30000004
+    }
+  ],
+  "orders": [
+    {
+      "id": "ord-fee-1",
+      "account": "alice",
+      "route": "usd-eur",
+      "amountIn": "1000000000000000",
+      "minOut": "996000000000000",
+      "window": 30000004
+    }
+  ]
+}

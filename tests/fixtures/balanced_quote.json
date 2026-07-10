@@ -1,0 +1,84 @@
+{
+  "scenario": "balanced_quote",
+  "clock": {
+    "timestamp": 1800000060,
+    "window": 30000001
+  },
+  "assets": [
+    {
+      "symbol": "USD18",
+      "name": "Aurora Dollar",
+      "decimals": 18,
+      "maxDeviationBps": 125,
+      "toleranceBps": 50,
+      "minTrade": "1000000000000",
+      "maxTrade": "5000000000000000"
+    },
+    {
+      "symbol": "EUR18",
+      "name": "Aurora Euro",
+      "decimals": 18,
+      "maxDeviationBps": 125,
+      "toleranceBps": 50,
+      "minTrade": "1000000000000",
+      "maxTrade": "5000000000000000"
+    }
+  ],
+  "prices": [
+    {
+      "asset": "USD18",
+      "price": "1",
+      "confidenceBps": 8,
+      "updatedAt": 1800000000,
+      "sequence": 1
+    },
+    {
+      "asset": "EUR18",
+      "price": "1",
+      "confidenceBps": 8,
+      "updatedAt": 1800000000,
+      "sequence": 1
+    }
+  ],
+  "fees": {
+    "defaultBps": 10,
+    "routeBps": 4,
+    "windowBps": 0,
+    "feeAccount": "treasury"
+  },
+  "accounts": [
+    {
+      "id": "alice",
+      "balances": [
+        {
+          "asset": "USD18",
+          "amount": "2000000000000000"
+        }
+      ]
+    },
+    {
+      "id": "treasury",
+      "balances": []
+    }
+  ],
+  "routes": [
+    {
+      "id": "usd-eur",
+      "hops": ["USD18", "EUR18"],
+      "toleranceBps": 50,
+      "feeBps": 6,
+      "settlementWindow": 30000001
+    }
+  ],
+  "orders": [
+    {
+      "id": "ord-balanced-1",
+      "account": "alice",
+      "route": "usd-eur",
+      "amountIn": "1000000000000000",
+      "minOut": "996000000000000",
+      "toleranceBps": 50,
+      "window": 30000001
+    }
+  ]
+}

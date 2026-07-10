@@ -1,0 +1,79 @@
+{
+  "scenario": "precision_quote",
+  "clock": {
+    "timestamp": 1800000360,
+    "window": 30000006
+  },
+  "assets": [
+    {
+      "symbol": "WETH18",
+      "decimals": 18,
+      "maxDeviationBps": 150,
+      "toleranceBps": 75,
+      "minTrade": "100000000000"
+    },
+    {
+      "symbol": "USDC6",
+      "decimals": 6,
+      "maxDeviationBps": 75,
+      "toleranceBps": 75,
+      "minTrade": "1"
+    }
+  ],
+  "prices": [
+    {
+      "asset": "WETH18",
+      "price": "3000",
+      "confidenceBps": 15,
+      "updatedAt": 1800000000,
+      "sequence": 1
+    },
+    {
+      "asset": "USDC6",
+      "price": "1",
+      "confidenceBps": 4,
+      "updatedAt": 1800000000,
+      "sequence": 1
+    }
+  ],
+  "fees": {
+    "defaultBps": 0,
+    "routeBps": 0,
+    "feeAccount": "treasury"
+  },
+  "accounts": [
+    {
+      "id": "alice",
+      "balances": [
+        {
+          "asset": "WETH18",
+          "amount": "2000000000000"
+        }
+      ]
+    },
+    {
+      "id": "treasury",
+      "balances": []
+    }
+  ],
+  "routes": [
+    {
+      "id": "weth-usdc",
+      "hops": ["WETH18", "USDC6"],
+      "toleranceBps": 75,
+      "feeBps": 0,
+      "settlementWindow": 30000006
+    }
+  ],
+  "orders": [
+    {
+      "id": "ord-precision-1",
+      "account": "alice",
+      "route": "weth-usdc",
+      "amountIn": "1000000000000",
+      "minOut": "2990",
+      "settle": false,
+      "window": 30000006
+    }
+  ]
+}
