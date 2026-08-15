@@ -1,63 +1,70 @@
-# Security Policy
+# Política de seguridad
 
-## Modelo De Seguridad
+AuroraDTL aplica defensa por capas a catálogo, oráculos, rutas, ventanas,
+liquidación y conciliación. Los despliegues deben separar publicación de
+precios, operación, tesorería, revisión de riesgo y firma de checkpoints.
 
-AuroraDTL asume que los fixtures representan entradas firmadas o aprobadas por
-un plano de control externo. El motor valida catalogo de assets, secuencias de
-oraculo, bandas de desviacion, rutas habilitadas, tolerancia de quote y balances
-antes de liquidar.
+## Versiones mantenidas
 
-## Invariantes Esperadas
+| Versión   | Estado            |
+| --------- | ----------------- |
+| `1.0.x`   | Mantenida         |
+| `< 1.0.0` | Sin mantenimiento |
 
-- Cada asset usado por rutas, cuentas y precios debe existir en el catalogo.
-- Las actualizaciones de oraculo deben ser monotonicamente crecientes por
-  secuencia.
-- Una actualizacion que supere la banda de desviacion del asset no reemplaza el
-  ultimo precio aceptado.
-- Las rutas deben contener al menos dos assets y no pueden repetir assets
-  adyacentes.
-- Las ordenes solo se liquidan si el quote cumple `minOut` y la tolerancia
-  efectiva.
-- El ledger no permite debitos por encima del balance disponible.
-- Los fees se contabilizan en la cuenta configurada como receptor de fees.
+## Superficie incluida
 
-## Validaciones Automatizadas
+Código C++ en `src/`, SDK, scripts, workflows, fixtures y parámetros descritos
+en `docs/`. Quedan fuera binarios recompilados por terceros, credenciales,
+fuentes de precio externas, sistemas de firma y frontends no incluidos.
 
-La suite TypeScript cubre:
+## Invariantes críticas
 
-- contrato basico de CLI;
-- quotes single-hop;
-- quotes entre assets con distinta precision;
-- actualizaciones de precio aceptadas;
-- rechazo de desviaciones fuera de banda;
-- composicion de fees;
-- rutas multi-asset;
-- balances posteriores al settlement.
+```mermaid
+flowchart TD
+    I["Escenario firmado"] --> C{"Catálogo válido"}
+    C -->|No| X["Rechazo"]
+    C -->|Sí| O{"Precio fresco y secuencial"}
+    O -->|No| X
+    O -->|Sí| R{"Ruta y ventana admitidas"}
+    R -->|No| X
+    R -->|Sí| Q["Quote + tolerancia"]
+    Q --> S["Liquidación contable"]
+    S --> A{"Conciliación limpia"}
+    A -->|No| P["Pausa y preservación"]
+    A -->|Sí| K["Checkpoint + firmas externas"]
+```
 
-## Gestion De Dependencias
+- todo asset de una ruta, precio o balance existe en el catálogo;
+- cada actualización de precio aumenta la secuencia;
+- un precio fuera de banda no reemplaza el último valor aceptado;
+- el débito nunca excede el saldo de la cuenta;
+- `minOut` y tolerancia se evalúan antes del movimiento contable;
+- cada fee se atribuye a la cuenta de tesorería configurada;
+- las ventanas no mezclan capacidad consumida de periodos distintos;
+- cada checkpoint enlaza el anterior y usa una secuencia contigua;
+- el quórum nunca supera el conjunto de revisores habilitados;
+- la conciliación usa eventos del mismo resultado y de la misma ventana.
 
-El motor C++ no usa dependencias de runtime externas. Node se utiliza para build
-y tests. Dependabot esta configurado para `npm` y GitHub Actions.
+## Gestión de incidentes
 
-## Alcance De Revision
+1. Detener nuevas órdenes para la ruta o activo afectado.
+2. Conservar escenario, binario, commit, salida JSON y checkpoint.
+3. Registrar timestamp, ventana, secuencias de precio y balances iniciales.
+4. Comparar quote, settlement, fees y movimientos de ledger.
+5. Ejecutar conciliación y stress sobre una copia aislada.
+6. Preparar el cambio mediante revisión independiente y release firmada.
+7. Reanudar sólo después de dos checkpoints consecutivos reconciliados.
 
-Se consideran dentro de alcance:
+## Comunicación privada
 
-- `src/`;
-- fixtures bajo `tests/fixtures/`;
-- scripts de build y CI;
-- tests TypeScript.
+Usa la pestaña **Security** del repositorio. No publiques detalles técnicos en
+issues. Incluye versión, sistema operativo, compilador, fixture mínimo, comando,
+salida observada, impacto económico y medidas temporales. No adjuntes claves,
+tokens ni datos personales.
 
-Quedan fuera de alcance artefactos locales generados en `out/`, `build/`,
-`node_modules/` y variables de entorno locales.
+El equipo acusará recibo en un máximo de 72 horas y comunicará una evaluación
+inicial en siete días naturales. La coordinación posterior depende del alcance,
+la reproducibilidad y las medidas operativas disponibles.
 
-## Reporte Interno
-
-Un reporte debe incluir:
-
-- fixture minimo de reproduccion;
-- comando exacto de CLI;
-- salida JSON relevante;
-- impacto economico esperado;
-- propuesta de test de regresion;
-- mitigacion directa sobre el componente afectado.
+Consulta [docs/modelo-seguridad.md](./docs/modelo-seguridad.md) y
+[docs/operaciones.md](./docs/operaciones.md).

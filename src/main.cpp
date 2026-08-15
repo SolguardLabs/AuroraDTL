@@ -48,6 +48,23 @@ std::vector<OracleDecision> applyUpdates(Scenario &scenario) {
   return decisions;
 }
 
+void attachOperationalState(Scenario &scenario, RunReport &report) {
+  StressScenario stressScenario;
+  PortfolioStressEngine stressEngine(scenario.assets, scenario.oracles, scenario.ledger);
+  StressReport preliminary = stressEngine.evaluate(stressScenario);
+  stressScenario.reserveBufferNotional = preliminary.baselineNotional * 0.05L;
+  report.stress = stressEngine.evaluate(stressScenario);
+
+  CheckpointPayload checkpoint;
+  checkpoint.sequence = 1U;
+  checkpoint.window = scenario.clock.window == 0U ? 1U : scenario.clock.window;
+  checkpoint.scenario = scenario.name;
+  checkpoint.balances = report.balances;
+  checkpoint.events = report.settlementEvents;
+  report.checkpoint = CheckpointBuilder::build(std::move(checkpoint));
+  report.hasOperationalState = true;
+}
+
 RunReport quoteScenario(Scenario &scenario) {
   RunReport report;
   report.scenario = scenario.name;
@@ -56,6 +73,7 @@ RunReport quoteScenario(Scenario &scenario) {
   QuoteEngine engine(scenario.assets, scenario.oracles, scenario.routes, scenario.fees, scenario.clock);
   report.quotes = engine.quoteAll(scenario.orders);
   report.balances = scenario.ledger.balances();
+  attachOperationalState(scenario, report);
   return report;
 }
 
@@ -73,6 +91,7 @@ RunReport settleScenario(Scenario &scenario) {
   report.settlementEvents = engine.events();
   report.ledgerEvents = scenario.ledger.events();
   report.balances = scenario.ledger.balances();
+  attachOperationalState(scenario, report);
   return report;
 }
 

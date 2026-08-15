@@ -3,4 +3,4 @@ build/
 node_modules/
 coverage/
 package-lock.json
-vulnerability.md
+tests/private/
