@@ -162,6 +162,70 @@ void writeBalance(JsonWriter &writer, const BalanceRow &balance) {
   writer.endObject();
 }
 
+void writeStress(JsonWriter &writer, const StressReport &stress) {
+  writer.key("stress");
+  writer.beginObject();
+  writer.key("scenario");
+  writer.stringValue(stress.scenario);
+  writePrice(writer, "baselineNotional", stress.baselineNotional);
+  writePrice(writer, "shockedNotional", stress.shockedNotional);
+  writePrice(writer, "lossNotional", stress.lossNotional);
+  writePrice(writer, "reserveBufferNotional", stress.reserveBufferNotional);
+  writePrice(writer, "uncoveredLossNotional", stress.uncoveredLossNotional);
+  writer.key("lossBps");
+  writer.numberValue(stress.lossBps);
+  writer.key("reserveCoverageBps");
+  writer.numberValue(stress.reserveCoverageBps);
+  writer.key("concentrationHhiBps");
+  writer.numberValue(stress.concentrationHhiBps);
+  writer.key("largestAssetShareBps");
+  writer.numberValue(stress.largestAssetShareBps);
+  writer.key("severity");
+  writer.stringValue(stress.severity);
+  writer.key("requiresIntervention");
+  writer.boolValue(stress.requiresIntervention());
+  writer.key("assets");
+  writer.beginArray();
+  for (const StressAssetExposure &asset : stress.assets) {
+    writer.beginObject();
+    writer.key("asset");
+    writer.stringValue(asset.asset);
+    writePrice(writer, "baselineNotional", asset.baselineNotional);
+    writePrice(writer, "shockedNotional", asset.shockedNotional);
+    writer.key("effectiveShockBps");
+    writer.numberValue(asset.effectiveShockBps);
+    writer.key("portfolioShareBps");
+    writer.numberValue(asset.portfolioShareBps);
+    writer.key("confidenceBps");
+    writer.numberValue(asset.confidenceBps);
+    writer.endObject();
+  }
+  writer.endArray();
+  writer.endObject();
+}
+
+void writeCheckpoint(JsonWriter &writer, const IntegrityCheckpoint &checkpoint) {
+  writer.key("checkpoint");
+  writer.beginObject();
+  writer.key("sequence");
+  writer.numberValue(checkpoint.sequence);
+  writer.key("window");
+  writer.numberValue(checkpoint.window);
+  writer.key("previousDigest");
+  writer.stringValue(checkpoint.previousDigest);
+  writer.key("digest");
+  writer.stringValue(checkpoint.digest);
+  writer.key("scenario");
+  writer.stringValue(checkpoint.scenario);
+  writer.key("balanceRows");
+  writer.numberValue(checkpoint.balanceRows);
+  writer.key("eventCount");
+  writer.numberValue(checkpoint.eventCount);
+  writer.key("totalRaw");
+  writer.stringValue(std::to_string(checkpoint.totalRaw));
+  writer.endObject();
+}
+
 } // namespace
 
 std::string writeRunReport(const RunReport &report, bool includeEvents) {
@@ -200,6 +264,11 @@ std::string writeRunReport(const RunReport &report, bool includeEvents) {
     writeBalance(writer, balance);
   }
   writer.endArray();
+
+  if (report.hasOperationalState) {
+    writeStress(writer, report.stress);
+    writeCheckpoint(writer, report.checkpoint);
+  }
 
   if (includeEvents) {
     writer.key("events");

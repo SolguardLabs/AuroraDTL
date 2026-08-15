@@ -5,13 +5,15 @@ import { spawnSync } from "node:child_process";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const outDir = join(root, "out");
-const exeName = process.platform === "win32" ? "auroradtl.exe" : "auroradtl";
-const output = join(outDir, exeName);
 const args = new Set(process.argv.slice(2));
 const warnings = args.has("--warnings");
 const clean = args.has("--clean");
+const nativeTests = args.has("--native-tests");
+const executableStem = nativeTests ? "aurora_native_tests" : "auroradtl";
+const exeName = process.platform === "win32" ? `${executableStem}.exe` : executableStem;
+const output = join(outDir, exeName);
 
-const sources = [
+const coreSources = [
   "src/common.cpp",
   "src/json.cpp",
   "src/amount.cpp",
@@ -31,8 +33,11 @@ const sources = [
   "src/audit.cpp",
   "src/model.cpp",
   "src/report.cpp",
-  "src/main.cpp",
-].map((file) => join(root, file));
+  "src/stress.cpp",
+  "src/checkpoint.cpp",
+];
+const entrySource = nativeTests ? "tests/native/operations_test.cpp" : "src/main.cpp";
+const sources = [...coreSources, entrySource].map((file) => join(root, file));
 
 function tryRun(command, args, options = {}) {
   return spawnSync(command, args, {
@@ -47,15 +52,18 @@ function commandExists(command) {
   if (process.platform === "win32") {
     return tryRun("where.exe", [command]).status === 0;
   }
-  return spawnSync("sh", ["-c", `command -v "${command.replaceAll('"', '\\"')}"`], {
-    cwd: root,
-    encoding: "utf8",
-    stdio: "pipe",
-  }).status === 0;
+  return (
+    spawnSync("sh", ["-c", `command -v "${command.replaceAll('"', '\\"')}"`], {
+      cwd: root,
+      encoding: "utf8",
+      stdio: "pipe",
+    }).status === 0
+  );
 }
 
 function findMsvcVcvars() {
   const candidates = [
+    "C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Auxiliary\\Build\\vcvars64.bat",
     "C:\\Program Files\\Microsoft Visual Studio\\18\\Insiders\\VC\\Auxiliary\\Build\\vcvars64.bat",
     "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\Build\\vcvars64.bat",
     "C:\\Program Files\\Microsoft Visual Studio\\2022\\Professional\\VC\\Auxiliary\\Build\\vcvars64.bat",
@@ -67,8 +75,10 @@ function findMsvcVcvars() {
 
 function compilerCandidates() {
   const explicit = process.env.CXX ? [process.env.CXX] : [];
-  const native = process.platform === "win32" ? ["clang++", "g++", "c++", "cl"] : ["c++", "g++", "clang++"];
-  const discovered = process.platform === "win32" ? findMsvcVcvars().map((path) => `vcvars:${path}`) : [];
+  const native =
+    process.platform === "win32" ? ["clang++", "g++", "c++", "cl"] : ["c++", "g++", "clang++"];
+  const discovered =
+    process.platform === "win32" ? findMsvcVcvars().map((path) => `vcvars:${path}`) : [];
   return [...explicit, ...native, ...discovered].filter(
     (value, index, array) => value && array.indexOf(value) === index,
   );
@@ -88,6 +98,7 @@ function buildWithMsvc(command) {
     "/EHsc",
     "/O2",
     "/D_CRT_SECURE_NO_WARNINGS",
+    "/I" + join(root, "src"),
     "/Fo" + objectDirForMsvc(),
     "/Fe:" + output,
     ...sources,
@@ -104,6 +115,7 @@ function buildWithMsvcVcvars(vcvarsPath) {
     "/EHsc",
     "/O2",
     "/D_CRT_SECURE_NO_WARNINGS",
+    "/I" + join(root, "src"),
     "/Fo" + objectDirForMsvc(),
     "/Fe:" + output,
     ...sources,
@@ -159,7 +171,9 @@ for (const compiler of compilerCandidates()) {
 }
 
 if (attempted.length === 0) {
-  console.error("No C++ compiler found. Install g++, clang++, c++, or run from a Visual Studio Developer Prompt.");
+  console.error(
+    "No C++ compiler found. Install g++, clang++, c++, or run from a Visual Studio Developer Prompt.",
+  );
 } else {
   console.error(`Compilation failed with: ${attempted.join(", ")}`);
 }
